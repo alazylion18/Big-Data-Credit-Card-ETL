@@ -22,9 +22,16 @@ random_seconds = np.random.randint(0, int(time_delta), size=total_events)
 # Convert numpy.int64 to native Python integers
 timestamps = [start_time + timedelta(seconds=int(sec)) for sec in random_seconds]
 
-df = pd.DataFrame({"user_id": user_id_array, "timestamp": timestamps})
+# Generate event types
+event_types = ["hold", "confirmation", "refund", "other"]
+df = pd.DataFrame({
+    "user_id": user_id_array,
+    "timestamp": timestamps,
+    "event_type": np.random.choice(event_types, size=total_events)
+})
+
 df = df.sample(frac=1).reset_index(drop=True)
 
-df.to_csv("user_timestamps_optimized.csv", index=False)
+df.to_csv("user_transactions_optimized.csv", index=False)
 
 print(f"Generated {total_events} records.")
