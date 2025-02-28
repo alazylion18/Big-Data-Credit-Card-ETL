@@ -3,38 +3,28 @@ import numpy as np
 import random
 from datetime import datetime, timedelta
 
-# Generate 10,000 user IDs
-user_ids = np.arange(1000000, 3000000)
+num_users = 1000000
+min_events = 100
+max_events = 600
 
-# Create a list to store the data
-data = []
+user_ids = np.arange(num_users)
+num_events_per_user = np.random.randint(min_events, max_events + 1, size=num_users)
+total_events = np.sum(num_events_per_user)
 
-# Generate data for each user ID
-for user_id in user_ids:
-    # Generate a random number of events for this user (between 1 and 50)
-    num_events = random.randint(100, 10000)
+user_id_array = np.repeat(user_ids, num_events_per_user)
 
-    # Generate random timestamps for each event
-    start_time = datetime(2023, 1, 1, 0, 0, 0)  # Start date
-    end_time = datetime(2023, 12, 31, 23, 59, 59)  # End date
-    time_delta = (end_time - start_time).total_seconds()
+start_time = datetime(2023, 1, 1, 0, 0, 0)
+end_time = datetime(2023, 12, 31, 23, 59, 59)
+time_delta = (end_time - start_time).total_seconds()
 
-    # Generate random timestamps within the specified range
-    timestamps = [
-        start_time + timedelta(seconds=random.randint(0, int(time_delta)))
-        for _ in range(num_events)
-    ]
+random_seconds = np.random.randint(0, int(time_delta), size=total_events)
 
-    # Add the user ID and timestamps to the data list
-    for timestamp in timestamps:
-        data.append([user_id, timestamp])
+# Convert numpy.int64 to native Python integers
+timestamps = [start_time + timedelta(seconds=int(sec)) for sec in random_seconds]
 
-# Create a Pandas DataFrame
-df = pd.DataFrame(data, columns=["user_id", "timestamp"])
-
-# Shuffle the DataFrame to randomize the order of events
+df = pd.DataFrame({"user_id": user_id_array, "timestamp": timestamps})
 df = df.sample(frac=1).reset_index(drop=True)
 
-# Save the DataFrame to a CSV file
+df.to_csv("user_timestamps_optimized.csv", index=False)
 
-df.to_csv("user_timestamps.csv", index=False)
+print(f"Generated {total_events} records.")
