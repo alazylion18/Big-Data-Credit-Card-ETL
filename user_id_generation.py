@@ -2,11 +2,12 @@ import pandas as pd
 import numpy as np
 import random
 from datetime import datetime, timedelta
+import names
 
 num_users = 1000000
 min_events = 100
 max_events = 300
-num_products = 100  # Example number of products
+num_products = 100
 
 user_ids = np.arange(num_users)
 num_events_per_user = np.random.randint(min_events, max_events + 1, size=num_users)
@@ -25,21 +26,37 @@ event_types = ["hold", "confirmation", "refund", "other"]
 
 categories = ["electronics", "clothing", "books", "furniture", "toys", "sports", "beauty", "tools", "food", "other"]
 
-cities = [
-    "New York", "London", "Tokyo", "Sydney", "Paris", "Rio de Janeiro", "Cairo", "Beijing", "Toronto", "Mumbai",
-    "Berlin", "Madrid", "Rome", "Buenos Aires", "Mexico City", "Amsterdam", "Seoul", "Cape Town", "Stockholm", "Dublin",
-    "Chicago", "Los Angeles", "Manchester", "Osaka", "Melbourne", "Sao Paulo", "Lagos", "Shanghai", "Vancouver", "Delhi",
-    "Frankfurt", "Barcelona", "Milan", "Bogota", "Monterrey", "Brussels", "Singapore", "Johannesburg", "Oslo", "Edinburgh",
-    "Houston", "Philadelphia", "Liverpool", "Kyoto", "Brisbane", "Santiago", "Nairobi", "Guangzhou", "Montreal", "Kolkata"
-]
+# City-Country Mapping
+city_country_map = {
+    "USA": ["New York", "Chicago", "Los Angeles", "Houston", "Philadelphia"],
+    "United Kingdom": ["London", "Manchester", "Liverpool", "Edinburgh"],
+    "Japan": ["Tokyo", "Osaka", "Kyoto"],
+    "Australia": ["Sydney", "Melbourne", "Brisbane"],
+    "France": ["Paris"],
+    "Brazil": ["Rio de Janeiro", "Sao Paulo", "Santiago"],
+    "Egypt": ["Cairo"],
+    "China": ["Beijing", "Shanghai", "Guangzhou"],
+    "Canada": ["Toronto", "Vancouver", "Montreal"],
+    "India": ["Mumbai", "Delhi", "Kolkata"],
+    "Germany": ["Berlin", "Frankfurt"],
+    "Spain": ["Madrid", "Barcelona"],
+    "Italy": ["Rome", "Milan"],
+    "Argentina": ["Buenos Aires"],
+    "Mexico": ["Mexico City", "Monterrey"],
+    "Netherlands": ["Amsterdam"],
+    "South Korea": ["Seoul"],
+    "South Africa": ["Cape Town", "Johannesburg"],
+    "Sweden": ["Stockholm"],
+    "Ireland": ["Dublin"],
+    "Nigeria": ["Lagos"],
+    "Colombia": ["Bogota"],
+    "Belgium": ["Brussels"],
+    "Singapore": ["Singapore"],
+    "Norway": ["Oslo"],
+    "Kenya": ["Nairobi"]
+}
 
-countries = [
-    "USA", "United Kingdom", "Japan", "Australia", "France", "Brazil", "Egypt", "China", "Canada", "India",
-    "Germany", "Spain", "Italy", "Argentina", "Mexico", "Netherlands", "South Korea", "South Africa", "Sweden", "Ireland",
-    "USA", "United Kingdom", "Japan", "Australia", "Brazil", "Nigeria", "China", "Canada", "India",
-    "Germany", "Spain", "Italy", "Colombia", "Mexico", "Belgium", "Singapore", "South Africa", "Norway", "United Kingdom",
-    "USA", "USA", "United Kingdom", "Japan", "Australia", "Chile", "Kenya", "China", "Canada", "India"
-]
+countries = list(city_country_map.keys())
 
 # Generate product IDs
 product_ids = np.random.randint(0, num_products, size=total_events)
@@ -49,19 +66,42 @@ unique_product_ids = np.unique(product_ids)
 product_prices = {product_id: round(random.uniform(0, 10000), 2) for product_id in unique_product_ids}
 prices = [product_prices[pid] for pid in product_ids]
 
+# Generate full names for each user
+def generate_full_names(num_users):
+    full_names = []
+    for _ in range(num_users):
+        full_names.append(names.get_full_name())
+    return full_names
+
+user_names = generate_full_names(num_users)
+
+# Create a user_id to name mapping.
+user_name_map = dict(zip(user_ids, user_names))
+
+# Map the names to the user_id_array.
+names_array = [user_name_map[user_id] for user_id in user_id_array]
+
+# Generate city and country lists ensuring city is in country
+country_list = np.random.choice(countries, size=total_events)
+city_list = []
+for country in country_list:
+    cities_in_country = city_country_map[country]
+    city_list.append(random.choice(cities_in_country))
+
 df = pd.DataFrame({
     "user_id": user_id_array,
+    "user_name": names_array,
     "timestamp": timestamps,
     "event_type": np.random.choice(event_types, size=total_events),
     "product_id": product_ids,
     "price": prices,
     "category": np.random.choice(categories, size=total_events),
-    "city": np.random.choice(cities, size=total_events),
-    "country": np.random.choice(countries, size=total_events)
+    "city": city_list,
+    "country": country_list
 })
 
 df = df.sample(frac=1).reset_index(drop=True)
 
-df.to_csv("user_transactions_optimized_with_products_and_categories.csv", index=False)
+df.to_csv("user_transactions_optimized_with_products_and_categories_and_names_and_correct_locations.csv", index=False)
 
-print(f"Generated {total_events} records with product IDs and prices.")
+print(f"Generated {total_events} records with product IDs, prices, categories, cities, countries, and names.")
