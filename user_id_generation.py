@@ -23,6 +23,24 @@ timestamps = [start_time + timedelta(seconds=int(sec)) for sec in random_seconds
 
 event_types = ["hold", "confirmation", "refund", "other"]
 
+categories = ["electronics", "clothing", "books", "furniture", "toys", "sports", "beauty", "tools", "food", "other"]
+
+cities = [
+    "New York", "London", "Tokyo", "Sydney", "Paris", "Rio de Janeiro", "Cairo", "Beijing", "Toronto", "Mumbai",
+    "Berlin", "Madrid", "Rome", "Buenos Aires", "Mexico City", "Amsterdam", "Seoul", "Cape Town", "Stockholm", "Dublin",
+    "Chicago", "Los Angeles", "Manchester", "Osaka", "Melbourne", "Sao Paulo", "Lagos", "Shanghai", "Vancouver", "Delhi",
+    "Frankfurt", "Barcelona", "Milan", "Bogota", "Monterrey", "Brussels", "Singapore", "Johannesburg", "Oslo", "Edinburgh",
+    "Houston", "Philadelphia", "Liverpool", "Kyoto", "Brisbane", "Santiago", "Nairobi", "Guangzhou", "Montreal", "Kolkata"
+]
+
+countries = [
+    "USA", "United Kingdom", "Japan", "Australia", "France", "Brazil", "Egypt", "China", "Canada", "India",
+    "Germany", "Spain", "Italy", "Argentina", "Mexico", "Netherlands", "South Korea", "South Africa", "Sweden", "Ireland",
+    "USA", "United Kingdom", "Japan", "Australia", "Brazil", "Nigeria", "China", "Canada", "India",
+    "Germany", "Spain", "Italy", "Colombia", "Mexico", "Belgium", "Singapore", "South Africa", "Norway", "United Kingdom",
+    "USA", "USA", "United Kingdom", "Japan", "Australia", "Chile", "Kenya", "China", "Canada", "India"
+]
+
 # Generate product IDs
 product_ids = np.random.randint(0, num_products, size=total_events)
 
@@ -36,11 +54,14 @@ df = pd.DataFrame({
     "timestamp": timestamps,
     "event_type": np.random.choice(event_types, size=total_events),
     "product_id": product_ids,
-    "price": prices
+    "price": prices,
+    "category": np.random.choice(categories, size=total_events),
+    "city": np.random.choice(cities, size=total_events),
+    "country": np.random.choice(countries, size=total_events)
 })
 
 df = df.sample(frac=1).reset_index(drop=True)
 
-df.to_csv("user_transactions_optimized_with_products.csv", index=False)
+df.to_csv("user_transactions_optimized_with_products_and_categories.csv", index=False)
 
 print(f"Generated {total_events} records with product IDs and prices.")
