@@ -2,9 +2,8 @@ import pandas as pd
 import numpy as np
 import random
 from datetime import datetime, timedelta
-import names
 
-num_users = 1000000
+num_users = 500000
 min_events = 100
 max_events = 300
 num_products = 100
@@ -23,10 +22,8 @@ random_seconds = np.random.randint(0, int(time_delta), size=total_events)
 timestamps = [start_time + timedelta(seconds=int(sec)) for sec in random_seconds]
 
 event_types = ["hold", "confirmation", "refund", "other"]
-
 categories = ["electronics", "clothing", "books", "furniture", "toys", "sports", "beauty", "tools", "food", "other"]
 
-# City-Country Mapping
 city_country_map = {
     "USA": ["New York", "Chicago", "Los Angeles", "Houston", "Philadelphia"],
     "United Kingdom": ["London", "Manchester", "Liverpool", "Edinburgh"],
@@ -58,50 +55,52 @@ city_country_map = {
 
 countries = list(city_country_map.keys())
 
-# Generate product IDs
 product_ids = np.random.randint(0, num_products, size=total_events)
-
-# Generate prices and create a product-price mapping
 unique_product_ids = np.unique(product_ids)
 product_prices = {product_id: round(random.uniform(0, 10000), 2) for product_id in unique_product_ids}
 prices = [product_prices[pid] for pid in product_ids]
 
-# Generate full names for each user
-def generate_full_names(num_users):
-    full_names = []
-    for _ in range(num_users):
-        full_names.append(names.get_full_name())
-    return full_names
-
-user_names = generate_full_names(num_users)
-
-# Create a user_id to name mapping.
+# Simple User Name Generation
+user_names = [f"user_{i}" for i in range(num_users)]
 user_name_map = dict(zip(user_ids, user_names))
-
-# Map the names to the user_id_array.
 names_array = [user_name_map[user_id] for user_id in user_id_array]
 
-# Generate city and country lists ensuring city is in country
+# Optimized City-Country Generation
 country_list = np.random.choice(countries, size=total_events)
-city_list = []
-for country in country_list:
-    cities_in_country = city_country_map[country]
-    city_list.append(random.choice(cities_in_country))
+city_list = [random.choice(city_country_map[country]) for country in country_list]
 
-df = pd.DataFrame({
-    "user_id": user_id_array,
-    "user_name": names_array,
-    "timestamp": timestamps,
-    "event_type": np.random.choice(event_types, size=total_events),
-    "product_id": product_ids,
-    "price": prices,
-    "category": np.random.choice(categories, size=total_events),
-    "city": city_list,
-    "country": country_list
-})
+chunk_size = 100
 
-df = df.sample(frac=1).reset_index(drop=True)
+for chunk_start in range(0, total_events, chunk_size):
+    chunk_end = min(chunk_start + chunk_size, total_events)
 
-df.to_csv("user_transactions_optimized_with_products_and_categories_and_names_and_correct_locations.csv", index=False)
+    chunk_user_ids = user_id_array[chunk_start:chunk_end]
+    chunk_timestamps = timestamps[chunk_start:chunk_end]
+    chunk_product_ids = product_ids[chunk_start:chunk_end]
+    chunk_prices = prices[chunk_start:chunk_end]
+    chunk_categories = np.random.choice(categories, size=chunk_end - chunk_start)
+    chunk_countries = country_list[chunk_start:chunk_end]
+    chunk_cities = city_list[chunk_start:chunk_end]
+    chunk_event_types = np.random.choice(event_types, size=chunk_end - chunk_start)
+    chunk_names = names_array[chunk_start:chunk_end]
+
+    chunk_df = pd.DataFrame({
+        "user_id": chunk_user_ids,
+        "user_name": chunk_names,
+        "timestamp": chunk_timestamps,
+        "event_type": chunk_event_types,
+        "product_id": chunk_product_ids,
+        "price": chunk_prices,
+        "category": chunk_categories,
+        "city": chunk_cities,
+        "country": chunk_countries
+    })
+
+    print(f"Processing chunk from {chunk_start} to {chunk_end}")
+
+    if chunk_start == 0:
+        chunk_df.to_csv("user_transactions_optimized_with_products_and_categories_and_names_and_correct_locations.csv", index=False)
+    else:
+        chunk_df.to_csv("user_transactions_optimized_with_products_and_categories_and_names_and_correct_locations.csv", mode='a', header=False, index=False)
 
 print(f"Generated {total_events} records with product IDs, prices, categories, cities, countries, and names.")
