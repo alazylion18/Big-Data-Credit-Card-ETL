@@ -2,6 +2,10 @@ import pandas as pd
 import numpy as np
 import random
 from datetime import datetime, timedelta
+import names
+from faker import Faker  # Import Faker
+
+fake = Faker()  # Initialize Faker
 
 num_users = 500000
 min_events = 100
@@ -60,16 +64,55 @@ unique_product_ids = np.unique(product_ids)
 product_prices = {product_id: round(random.uniform(0, 10000), 2) for product_id in unique_product_ids}
 prices = [product_prices[pid] for pid in product_ids]
 
-# Simple User Name Generation
-user_names = [f"user_{i}" for i in range(num_users)]
-user_name_map = dict(zip(user_ids, user_names))
-names_array = [user_name_map[user_id] for user_id in user_id_array]
-
-# Optimized City-Country Generation
 country_list = np.random.choice(countries, size=total_events)
 city_list = [random.choice(city_country_map[country]) for country in country_list]
 
 chunk_size = 100
+
+def generate_formatted_ssn():
+    digits = [str(random.randint(0, 9)) for _ in range(9)]
+    return f"{''.join(digits[:3])}-{''.join(digits[3:5])}-{''.join(digits[5:])}"
+
+user_ssn_map = {user_id: generate_formatted_ssn() for user_id in user_ids}
+ssn_array = [user_ssn_map[user_id] for user_id in user_id_array]
+
+def generate_credit_card_number():
+    length = random.randint(15, 19)
+    return "".join([str(random.randint(0, 9)) for _ in range(length)])
+
+user_credit_card_map = {user_id: generate_credit_card_number() for user_id in user_ids}
+credit_card_array = [user_credit_card_map[user_id] for user_id in user_id_array]
+
+user_cvv_map = {user_id: "".join([str(random.randint(0, 9)) for _ in range(3)]) for user_id in user_ids}
+cvv_array = [user_cvv_map[user_id] for user_id in user_id_array]
+
+def generate_expiration_date():
+    month = random.randint(1, 12)
+    year = random.randint(23, 33)
+    return f"{month:02d}-{year:02d}"
+
+user_expiration_map = {user_id: generate_expiration_date() for user_id in user_ids}
+expiration_array = [user_expiration_map[user_id] for user_id in user_id_array]
+
+# Generate addresses for each user
+user_address_map = {user_id: fake.street_address() for user_id in user_ids}
+address_array = [user_address_map[user_id] for user_id in user_id_array]
+
+def generate_phone_number(country):
+    if country == "USA":
+        return f"+1-{random.randint(200, 999)}-{random.randint(100, 999)}-{random.randint(1000, 9999)}"
+    elif country == "United Kingdom":
+        return f"+44-{random.randint(7000000000, 7999999999)}"
+    elif country == "Japan":
+        return f"+81-{random.randint(70, 90)}-{random.randint(1000, 9999)}-{random.randint(1000, 9999)}"
+    elif country == "India":
+        return f"+91-{random.randint(6000000000, 9999999999)}"
+    else: #generic format
+        return f"+{random.randint(1, 999)}-{random.randint(1000000, 9999999999)}"
+
+user_phone_map = {user_id: generate_phone_number(random.choice(countries)) for user_id in user_ids}
+phone_array = [user_phone_map[user_id] for user_id in user_id_array]
+
 
 for chunk_start in range(0, total_events, chunk_size):
     chunk_end = min(chunk_start + chunk_size, total_events)
@@ -82,25 +125,41 @@ for chunk_start in range(0, total_events, chunk_size):
     chunk_countries = country_list[chunk_start:chunk_end]
     chunk_cities = city_list[chunk_start:chunk_end]
     chunk_event_types = np.random.choice(event_types, size=chunk_end - chunk_start)
-    chunk_names = names_array[chunk_start:chunk_end]
+    chunk_ssns = ssn_array[chunk_start:chunk_end]
+    chunk_credit_cards = credit_card_array[chunk_start:chunk_end]
+    chunk_cvvs = cvv_array[chunk_start:chunk_end]
+    chunk_exps = expiration_array[chunk_start:chunk_end]
+    chunk_addresses = address_array[chunk_start:chunk_end]
+    chunk_phones = phone_array[chunk_start:chunk_end]
+
+
+    unique_user_ids_in_chunk = np.unique(chunk_user_ids)
+    user_name_map = {}
+    for user_id in unique_user_ids_in_chunk:
+        user_name_map[user_id] = names.get_full_name()
+    chunk_names = [user_name_map[user_id] for user_id in chunk_user_ids]
 
     chunk_df = pd.DataFrame({
         "user_id": chunk_user_ids,
         "user_name": chunk_names,
+        "ssn": chunk_ssns,
+        "credit_card_number": chunk_credit_cards,
+        "cvv": chunk_cvvs,
+        "expiration_date": chunk_exps,
+        "address": chunk_addresses,
         "timestamp": chunk_timestamps,
         "event_type": chunk_event_types,
         "product_id": chunk_product_ids,
         "price": chunk_prices,
         "category": chunk_categories,
         "city": chunk_cities,
-        "country": chunk_countries
+        "country": chunk_countries,
+        "phone_numer" : chunk_phones
     })
 
     print(f"Processing chunk from {chunk_start} to {chunk_end}")
 
     if chunk_start == 0:
-        chunk_df.to_csv("user_transactions_optimized_with_products_and_categories_and_names_and_correct_locations.csv", index=False)
+        chunk_df.to_csv("user_transactions_complete_dataset.csv", index=False)
     else:
-        chunk_df.to_csv("user_transactions_optimized_with_products_and_categories_and_names_and_correct_locations.csv", mode='a', header=False, index=False)
-
-print(f"Generated {total_events} records with product IDs, prices, categories, cities, countries, and names.")
+        chunk_df.to_csv("user_transactions_complete_dataset.csv", mode='a', header=False, index=False)
